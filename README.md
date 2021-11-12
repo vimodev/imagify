@@ -14,4 +14,4 @@ Imagify will encode if `file` does not have a `.png` extension, and will decode 
 
 Run `make`.
 
-Or alternatively run `gcc -I . main.c stb_image/stb_image.h stb_image/stb_image_write.h -lm -o app`
+Or alternatively run `gcc -I . main.c stb_image/stb_image.h stb_image/stb_image_write.h -lm -o imagify`
