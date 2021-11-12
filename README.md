@@ -2,6 +2,8 @@
 
 Turn files into images and back. Lossy image compression will of course render the image useless.
 
+![This README file as an image](/README.png "This README file as an image")
+
 ## Usage
 
 `imagify <file> <outputfile>`

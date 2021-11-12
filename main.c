@@ -10,8 +10,8 @@
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image/stb_image_write.h"
 
-unsigned char *file_to_image_buffer(char* filepath, int *dimensions);
-FILE *image_buffer_to_file(char *filepath, unsigned char *image, int dimensions);
+unsigned char *file_to_image_buffer(char* filepath, int *width, int *height);
+FILE *image_buffer_to_file(char *filepath, unsigned char *image, int width, int height);
 bool file_has_extension(char *filename, char *extension);
 
 int main(int argc, char **argv) {
@@ -34,10 +34,10 @@ int main(int argc, char **argv) {
     if (encode) {
 
         // Read file into image buffer
-        int dimension;
-        unsigned char *image = file_to_image_buffer(filepath, &dimension);
+        int width, height;
+        unsigned char *image = file_to_image_buffer(filepath, &width, &height);
         // Write image buffer as png
-        stbi_write_png(outputpath, dimension, dimension, 4, image, dimension * 4);
+        stbi_write_png(outputpath, width, height, 4, image, width * 4);
         free(image);
 
     } else {
@@ -47,15 +47,11 @@ int main(int argc, char **argv) {
         if(image == NULL) {
             printf("ERROR - %s: Unable to parse image.\n", filepath);
         }
-        if (width != height) {
-            printf("ERROR - %s: Image is not square (%dx%d). Imagify generates only square images.\n", filepath, width, height);
-            exit(1);
-        }
         if (channels != 4) {
             printf("ERROR - %s: Image does not have the required 4 channels (RGBA), it instead seems to have %d channels.\n", filepath, channels);
             exit(1);
         }
-        FILE *ptr = image_buffer_to_file(outputpath, image, width);
+        FILE *ptr = image_buffer_to_file(outputpath, image, width, height);
 
         stbi_image_free(image);
 
@@ -64,10 +60,10 @@ int main(int argc, char **argv) {
     return 0;
 }
 
-FILE *image_buffer_to_file(char *filepath, unsigned char *image, int dimensions) {
+FILE *image_buffer_to_file(char *filepath, unsigned char *image, int width, int height) {
     FILE *file;
     file = fopen(filepath, "wb+");
-    for (int i = 0; i < dimensions * dimensions; i++) {
+    for (int i = 0; i < width * height; i++) {
         unsigned char a = image[4*i + 3];
         if (a == 0) break;
         if (a == 255) a = 3;
@@ -78,7 +74,7 @@ FILE *image_buffer_to_file(char *filepath, unsigned char *image, int dimensions)
     fclose(file);
 }
 
-unsigned char *file_to_image_buffer(char* filepath, int *dimensions) {
+unsigned char *file_to_image_buffer(char* filepath, int *width, int *height) {
         // Open file
         FILE *ptr;
         ptr = fopen(filepath, "rb");
@@ -87,7 +83,7 @@ unsigned char *file_to_image_buffer(char* filepath, int *dimensions) {
         int file_size = ftell(ptr);
         fseek(ptr, 0, SEEK_SET);
         // Make appropriate image dimension
-        int image_dimension = ceil(sqrt(file_size));
+        int image_dimension = (int) ceil(sqrt(file_size));
         // 4 bytes for each pixel: RGBA
         size_t buffer_size = image_dimension * image_dimension * 4;
         unsigned char *image = calloc(buffer_size, 1);
@@ -106,7 +102,8 @@ unsigned char *file_to_image_buffer(char* filepath, int *dimensions) {
         while (index % 4 != 3) index++; empty_bytes++;
         image[index] = 3 - empty_bytes;
         fclose(ptr);
-        *dimensions = image_dimension;
+        *width = image_dimension;
+        *height = (int) ceil(((double) index / 4.0) / (double) image_dimension);
         return image;
 }
 
